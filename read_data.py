@@ -13,6 +13,7 @@ def read2(file):
     for h in header_list:
         data_dict[h] = []
 
+
     for line in f:
         list = line.strip().split()
 
@@ -88,16 +89,76 @@ df_cleaned = df.dropna(subset=['Gjennomsnittlig kvadratmeterpris (kr)', 'Antall 
 #Info about data:
 #print(df_cleaned.describe())
 df = df_cleaned
-avg_price_reg = df.groupby('region')['Gjennomsnittlig kvadratmeterpris (kr)'].mean().reset_index()
 
+# find average price for each region:
+average_price_by_region = df.groupby('region')['Gjennomsnittlig kvadratmeterpris (kr)'].mean().reset_index()
+average_price_by_region = average_price_by_region.sort_values(by = 'Gjennomsnittlig kvadratmeterpris (kr)', ascending=False)
+#print(average_price_by_region)
 
-#oslo = df_cleaned[df_cleaned['region'] == "0301 Oslo"]
-#print(oslo)
+#Lowest and highest:
+def highest_lowest():
+    highest = average_price_by_region.head(1)
+    lowest = average_price_by_region.tail(1)
+    plt.barh(highest['region'], highest['Gjennomsnittlig kvadratmeterpris (kr)'], color='skyblue')
+    plt.barh(lowest['region'], lowest['Gjennomsnittlig kvadratmeterpris (kr)'], color='red')
+    plt.title('Highest and lowest sqm price')
+    plt.xlabel('Average Price per Square Meter (kr)')
+    plt.ylabel('Region')
+    plt.tight_layout()
+    plt.show()
+highest_lowest()
 
+# info about just Oslo:
+def oslo_info():
+    oslo_df = df[df['region'] == "0301 Oslo"]
+    print(oslo_df)
 
-average_price_by_region = df.groupby(['region'])['Gjennomsnittlig kvadratmeterpris (kr)'].mean()
+    # Average per quarter:
+    avg_q_oslo = oslo_df.groupby('kvartal')['Gjennomsnittlig kvadratmeterpris (kr)'].mean()
 
+    # Change the time:
 
+    plt.figure(figsize=(12, 6))
+    avg_q_oslo.plot()
+    plt.title(f'Price Change Over Time in Oslo')
+    plt.xlabel('Quarter')
+    plt.ylabel('Average Square Meter Price')
+    plt.grid(True)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
 
+    # Show the plot
+    plt.show()
+#oslo_info()
 
+def country_over_time():
+    avg_quarter_country = df.groupby('kvartal')['Gjennomsnittlig kvadratmeterpris (kr)'].mean()
+    plt.figure(figsize=(12, 6))
+    avg_quarter_country.plot()
+    plt.title('Price change over time in Norway')
+    plt.xlabel('Quarter')
+    plt.ylabel('Average price')
+    plt.grid(True)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.show()
+#country_over_time()
 
+def oslo_vs_norway():
+    norway = df.groupby('kvartal')['Gjennomsnittlig kvadratmeterpris (kr)'].mean()
+
+    oslo_df = df[df['region'] == "0301 Oslo"]
+    oslo = oslo_df.groupby('kvartal')['Gjennomsnittlig kvadratmeterpris (kr)'].mean()
+
+    plt.figure(figsize=(12, 6))
+    norway.plot(label = 'Norway', color = 'red')
+    oslo.plot(label = "Oslo", color = "blue")
+    plt.title('Price change over time in Norway vs. Oslo')
+    plt.xlabel('Quarter')
+    plt.ylabel('Average price per sqm')
+    plt.grid(True)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.legend() # This is to show oslo and norway
+    plt.show()
+#oslo_vs_norway()
