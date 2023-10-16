@@ -162,3 +162,25 @@ def oslo_vs_norway():
     plt.legend() # This is to show oslo and norway
     plt.show()
 #oslo_vs_norway()
+
+# til oscar:
+"""
+def oslo_vs_norway():
+
+    norway = data_cleaned.groupby('kvartal')['Gjennomsnittlig kvadratmeterpris (kr)'].mean()
+
+    oslo_df = data_cleaned[data_cleaned['region'] == "0301 Oslo"]
+    oslo = oslo_df.groupby('kvartal')['Gjennomsnittlig kvadratmeterpris (kr)'].mean()
+
+    plt.figure(figsize=(12, 6))
+    norway.plot(label = 'Norway', color = 'red')
+    oslo.plot(label = "Oslo", color = "blue")
+    plt.title('Price change over time in Norway vs. Oslo')
+    plt.xlabel('Quarter')
+    plt.ylabel('Average price per sqm')
+    plt.grid(True)
+    plt.xticks(rotation=45)
+    plt.tight_layout()
+    plt.legend() # This is to show oslo and norway
+    plt.show()
+"""
