@@ -71,10 +71,31 @@ def read2(file):
 data = read2("data.csv")  
 
 # Now over to the dataframe:
+import matplotlib.pyplot as plt
+
+# Make Nan valuea:
 df = pd.DataFrame(data)
 df.replace(['.', '..'], np.nan, inplace = True)
-print(df)
 
+
+# Convert all values to numeric
+df['Gjennomsnittlig kvadratmeterpris (kr)'] = pd.to_numeric(df['Gjennomsnittlig kvadratmeterpris (kr)'], errors = 'coerce')
+df['Antall boligomsetninger'] = pd.to_numeric(df['Gjennomsnittlig kvadratmeterpris (kr)'], errors = 'coerce')
+
+# remove all Nan values:
+df_cleaned = df.dropna(subset=['Gjennomsnittlig kvadratmeterpris (kr)', 'Antall boligomsetninger'], how='all')
+
+#Info about data:
+#print(df_cleaned.describe())
+df = df_cleaned
+avg_price_reg = df.groupby('region')['Gjennomsnittlig kvadratmeterpris (kr)'].mean().reset_index()
+
+
+#oslo = df_cleaned[df_cleaned['region'] == "0301 Oslo"]
+#print(oslo)
+
+
+average_price_by_region = df.groupby(['region'])['Gjennomsnittlig kvadratmeterpris (kr)'].mean()
 
 
 
