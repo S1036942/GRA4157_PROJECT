@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 
-def read2(file):
+def read_file(file):
     f = open(file, "r", encoding = "ISO-8859-1")
     line1 = f.readline()
     header_list = line1.strip().split("\t")
@@ -67,9 +67,11 @@ def read2(file):
 
         for i, header in enumerate(header_list):
             data_dict[header].append(new_list[i])
+    f.close()
     return data_dict
 
-data = read2("data.csv")  
+data = read_file("data.csv")
+#data = read_file("data_semi.csv")
 
 # Now over to the dataframe:
 import matplotlib.pyplot as plt
