@@ -71,7 +71,6 @@ def educational_differences():
 
 # Regression:
 def regression():
-    import sklearn
     from sklearn.linear_model import LinearRegression
     from sklearn.model_selection import train_test_split
     from sklearn.metrics import mean_squared_error, r2_score
@@ -92,12 +91,106 @@ def regression():
     # Splitting data into training and testing sets
     X_train, X_test, y_train, y_test = train_test_split(features_encoded, target, test_size=0.2, random_state=42)
 
-    print(X_train.shape)    #Output here is: (118,8)
-    print(X_test.shape)     #Output here is: (30,8)
-    print(y_train.shape)    #Output here is: (118,)
-    print(y_test.shape)     #Output here is: (30,)
 
 
+    def shape():
+        print(X_train.shape)    #Output here is: (118,8)
+        print(X_test.shape)     #Output here is: (30,8)
+        print(y_train.shape)    #Output here is: (118,)
+        print(y_test.shape)     #Output here is: (30,)
+    shape()
+
+    def with_statsmodels():
+        X_train_sm = sm.add_constant(X_train)
+        X_test_sm = sm.add_constant(X_test)
+
+        #Make sure dummy variables are int:
+        X_train_sm['gender_M'] = X_train_sm['gender_M'].astype(int)
+        X_train_sm['workex_Yes'] = X_train_sm['workex_Yes'].astype(int)
+        X_train_sm['specialisation_Mkt&HR'] = X_train_sm['specialisation_Mkt&HR'].astype(int)
+
+        X_test_sm['gender_M'] = X_test_sm['gender_M'].astype(int)
+        X_test_sm['workex_Yes'] = X_test_sm['workex_Yes'].astype(int)
+        X_test_sm['specialisation_Mkt&HR'] = X_test_sm['specialisation_Mkt&HR'].astype(int)
+
+        # Fit the model
+        model = sm.OLS(y_train, X_train_sm).fit()
+
+        # Display the summary
+        print("Statsmodels)")
+        print(model.summary())
+        
+        #Prediciton:
+        y_pred = model.predict(X_test_sm)
+
+        #Evaluating model:
+        #MSE:
+        mse = np.mean((y_test - y_pred) ** 2)
+        print(f"MSE: {mse:.3f}")
+        r2 = model.rsquared
+        print(f"R-squared: {r2:.3f}")
+
+        # Predict one data point:
+        #predict for one data point:
+        def predict_one_data_sm():
+            new_data_features = {'gender':'M', 'ssc_p':'91.00', 'hsc_p':'60.00', 'degree_p':'70.00', 'workex':'Yes', 'etest_p':'66.00', 'specialisation':'Mkt&HR', 'mba_p':'88.00'}
+            new_data_df = pd.DataFrame([new_data_features])
+            # Convert string representations of numbers to float
+            for column in ['ssc_p', 'hsc_p', 'degree_p', 'etest_p', 'mba_p']:
+                new_data_df[column] = pd.to_numeric(new_data_df[column])
+
+            # One-hot encode the data
+            new_data_encoded = pd.get_dummies(new_data_df, drop_first=True)
+
+            # Ensure the new data has the same columns as the training data
+            # If a column is missing in new_data_encoded, add it with a value of 0
+            for col in features_encoded.columns:  # Assuming features_encoded is from your training data
+                if col not in new_data_encoded.columns:
+                    new_data_encoded[col] = 0
+
+            # Ensure the columns are in the same order as the training data
+            new_data_encoded = new_data_encoded[features_encoded.columns]
+
+            # Add a constant for the intercept
+            new_data_encoded['const'] = 1
+            new_data_with_const = new_data_encoded
+
+            # Predict using the model
+            prediction = model.predict(new_data_with_const)
+            print("Predicted value:", prediction[0])
+        predict_one_data_sm()
+
+        return y_pred
+    y_pred = with_statsmodels()
+
+
+    # Visualization of actual vs. predicted:
+    def pred_vs_act():
+        plt.figure(figsize=(10, 6))
+        plt.scatter(y_test, y_pred, color='blue')
+        plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
+        plt.xlabel('Actual Salary')
+        plt.ylabel('Predicted Salary')
+        plt.title('Actual vs. Predicted Salary')
+        plt.show()
+    #pred_vs_act()
+
+    # Residuals Analysis
+    def residual_analysis():
+        residuals = y_test - y_pred
+        plt.figure(figsize=(10, 6))
+        plt.scatter(y_pred, residuals, color='red')
+        plt.axhline(y=0, color='black', linestyle='--', linewidth=2)
+        plt.xlabel('Predicted Salary')
+        plt.ylabel('Residuals')
+        plt.title('Residuals Analysis')
+        plt.show()
+    #residual_analysis()
+
+regression()
+
+
+"""
     def with_sklearn():
         # Create and train the model
         model = LinearRegression()
@@ -131,55 +224,30 @@ def regression():
         rmse = np.sqrt(mse)
         print(f"RMSE: {rmse} ")
 
-        return y_pred
 
+        #predict for one data point:
+        def predict_one_data():
+            new_data_features = {'gender':'M', 'ssc_p':'91.00', 'hsc_p':'60.00', 'degree_p':'70.00', 'workex':'Yes', 'etest_p':'66.00', 'specialisation':'Mkt&HR', 'mba_p':'88.00'}
+            #new_data_features_list = [value for value in new_data_features_dict.values()]
+            new_data_df = pd.DataFrame(columns=df_cleaned.columns)
+            new_data_df = pd.concat([new_data_df, pd.DataFrame([new_data_features])], ignore_index=True)
+
+            # Convert new values to numeric:
+            for column in ['ssc_p', 'hsc_p', 'degree_p', 'etest_p', 'mba_p']:
+                new_data_df[column] = pd.to_numeric(new_data_df[column])
+            # Fix for the dummy variables
+            new_data_encoded = pd.get_dummies(new_data_df, drop_first=True)
+            
+            for col in features_encoded.columns:
+                if col not in new_data_encoded.columns:
+                    new_data_encoded[col] = 0
+
+            
+            prediction = model.predict(new_data_encoded)
+            print(f"Prediction: {prediction[0]:.2f} dollars")
+        predict_one_data()
+
+        return y_pred
     #y_pred = with_sklearn()
-
-    def with_statsmodels():
-        X_with_const = sm.add_constant(X_train)
-        X_test_with_const = sm.add_constant(X_test)
-
-        # Fit the model
-        model = sm.OLS(y_train, X_with_const).fit()
-
-        # Display the summary
-        print("Statsmodels)")
-        print(model.summary())
-        y_pred = model.predict(X_test_with_const)
-
-        #Evaluating model:
-        #MSE:
-        mse = np.mean((y_test - y_pred) ** 2)
-        print(f"MSE: {mse:.3f}")
-        r2 = model.rsquared
-        print(f"R-squared: {r2:.3f}")
-
-        return y_pred
-
-    y_pred = with_statsmodels()
-
-
-    # Visualization of actual vs. predicted:
-    def pred_vs_act():
-        plt.figure(figsize=(10, 6))
-        plt.scatter(y_test, y_pred, color='blue')
-        plt.plot([y_test.min(), y_test.max()], [y_test.min(), y_test.max()], 'k--', lw=4)
-        plt.xlabel('Actual Salary')
-        plt.ylabel('Predicted Salary')
-        plt.title('Actual vs. Predicted Salary')
-        plt.show()
-    pred_vs_act()
-
-    # Residuals Analysis
-    def residual_analysis():
-        residuals = y_test - y_pred
-        plt.figure(figsize=(10, 6))
-        plt.scatter(y_pred, residuals, color='red')
-        plt.axhline(y=0, color='black', linestyle='--', linewidth=2)
-        plt.xlabel('Predicted Salary')
-        plt.ylabel('Residuals')
-        plt.title('Residuals Analysis')
-        plt.show()
-    residual_analysis()
-
-regression()
+    """
+#regression()
