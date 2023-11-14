@@ -81,15 +81,27 @@ def regression():
     # Drop rows with missing 'salary' values for this regression analysis
     df_cleaned = df.dropna(subset=['salary'])
 
+    # Remove outliers:
+    Q1 = df_cleaned['salary'].quantile(0.25)
+    Q3 = df_cleaned['salary'].quantile(0.75)
+    IQR = Q3 - Q1
+    lower_bound = Q1 - 1.5 * IQR
+    upper_bound = Q3 + 1.5 * IQR
+    df_cleaned = df_cleaned[(df_cleaned['salary'] >= lower_bound) & (df_cleaned['salary'] <= upper_bound)]
+
+
+
+
     # Selecting features and target variable
     features = df_cleaned[['gender', 'ssc_p', 'hsc_p', 'degree_p', 'workex', 'etest_p', 'specialisation', 'mba_p']]
+    #features = df_cleaned[['gender', 'workex', 'specialisation', 'mba_p']]
     target = df_cleaned['salary']
 
     # Convert categorical variables into dummy variables
     features_encoded = pd.get_dummies(features, drop_first=True)
 
     # Splitting data into training and testing sets
-    X_train, X_test, y_train, y_test = train_test_split(features_encoded, target, test_size=0.2, random_state=42)
+    X_train, X_test, y_train, y_test = train_test_split(features_encoded, target, test_size=0.35, random_state=42)
 
 
 
@@ -104,6 +116,7 @@ def regression():
         X_train_sm = sm.add_constant(X_train)
         X_test_sm = sm.add_constant(X_test)
 
+        
         #Make sure dummy variables are int:
         X_train_sm['gender_M'] = X_train_sm['gender_M'].astype(int)
         X_train_sm['workex_Yes'] = X_train_sm['workex_Yes'].astype(int)
@@ -112,7 +125,7 @@ def regression():
         X_test_sm['gender_M'] = X_test_sm['gender_M'].astype(int)
         X_test_sm['workex_Yes'] = X_test_sm['workex_Yes'].astype(int)
         X_test_sm['specialisation_Mkt&HR'] = X_test_sm['specialisation_Mkt&HR'].astype(int)
-
+        
         # Fit the model
         model = sm.OLS(y_train, X_train_sm).fit()
 
@@ -129,14 +142,17 @@ def regression():
         print(f"MSE: {mse:.3f}")
         r2 = model.rsquared
         print(f"R-squared: {r2:.3f}")
+        #print(y_pred)
 
         # Predict one data point:
         #predict for one data point:
         def predict_one_data_sm():
-            new_data_features = {'gender':'M', 'ssc_p':'91.00', 'hsc_p':'60.00', 'degree_p':'70.00', 'workex':'Yes', 'etest_p':'66.00', 'specialisation':'Mkt&HR', 'mba_p':'88.00'}
+            new_data_features = {'gender':'M', 'ssc_p':'70.00', 'hsc_p':'60.00', 'degree_p':'70.00', 'workex':'No', 'etest_p':'66.00', 'specialisation':'Mkt&HR', 'mba_p':'60.00'}
+            #new_data_features = {'gender':'M', 'workex':'Yes', 'specialisation':'Mkt&HR', 'mba_p':'88.0'}
             new_data_df = pd.DataFrame([new_data_features])
             # Convert string representations of numbers to float
             for column in ['ssc_p', 'hsc_p', 'degree_p', 'etest_p', 'mba_p']:
+            #for column in ['mba_p']:
                 new_data_df[column] = pd.to_numeric(new_data_df[column])
 
             # One-hot encode the data
@@ -157,8 +173,9 @@ def regression():
 
             # Predict using the model
             prediction = model.predict(new_data_with_const)
-            print("Predicted value:", prediction[0])
-        predict_one_data_sm()
+            #print(prediction)
+            print("Predicted value:", prediction[0], "dollars")
+        #predict_one_data_sm()
 
         return y_pred
     y_pred = with_statsmodels()
@@ -173,7 +190,7 @@ def regression():
         plt.ylabel('Predicted Salary')
         plt.title('Actual vs. Predicted Salary')
         plt.show()
-    #pred_vs_act()
+    pred_vs_act()
 
     # Residuals Analysis
     def residual_analysis():
